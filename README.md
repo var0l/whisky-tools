@@ -56,14 +56,22 @@ list; `results.csv` = latest run output.
 - **v3** — sort by rating desc; strict-ABV scoring (−60 on mismatch);
   decade hints ("lata XX") scored against the bottled-year column;
   EUR-only prices (hardcoded FX); top-3 alternatives on low-confidence rows.
+- **v4** — bottler alias table (vW/SV/CA/BR/MSWD/TFM/WAGE/DL/GM/LoDz/CM/
+  SMWS/LMDW…); age+vintage scoring; page-level verification; "NOT FOUND"
+  below conf 15 and sorted to the bottom; columns reordered
+  (input/confidence/name/rating/price/link).
+- **v5** — multi-query search: full line → `brand + vintage` →
+  `brand + rare tokens` → combined, stops early at conf ≥70. **Google
+  fallback**: when WB search fails, queries
+  `whiskybase {brand} {abv} {rare tokens}` on Google and extracts WB ids
+  from the results page — Google indexes bottles WB's own search misses
+  (Ballechin 2014 "Foundations", Kilkerran Heavily Peated PiP6, Mosgaard
+  peated batches). Real-list result: 46/46 found.
 
 ## Known gaps / next steps
 
-- ~15/46 rows on the real list are low-confidence, mostly bottles not yet
-  catalogued on Whiskybase (new/rare releases) or vague "old bottling"
-  inputs. Candidates shown as alternatives; manual check via links.
-- Confidence <10 currently still prints a match (e.g. Kilkerran PiP
-  batch 6 → wrong Bowmore). Planned: show "Not found" instead.
+- Some rows remain low-confidence (roughly 20-60) — genuinely ambiguous
+  bottles; check the clickable alternatives.
 - Bottled-year scoring takes the max year in the row — vintage vs bottled
   column could be separated for precision.
 - Optional: logged-in Whiskybase session for the full shop-listing table.

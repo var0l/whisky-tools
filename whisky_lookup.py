@@ -156,6 +156,32 @@ async def search_candidates(page, query):
     return cands[:10]
 
 
+async def google_candidates(page, brand, qabv, rare):
+    """Google indexes WB pages its own search misses. Returns {id: det}."""
+    q = "whiskybase " + " ".join([brand] +
+        ([f"{qabv}"] if qabv else []) + rare[:3])
+    await page.goto("https://www.google.com/search?q=" + quote_plus(q),
+                    wait_until="load")
+    await page.wait_for_timeout(3500)
+    txt = await page.inner_text("body")
+    ids = list(dict.fromkeys(re.findall(r"WB(\d{5,7})", txt)))
+    hrefs = await page.evaluate("""() =>
+        [...document.querySelectorAll('a')].map(a => a.href)
+          .filter(h => h && h.includes('whiskybase'))""")
+    for h in hrefs:
+        m = re.search(r"whiskies/whisky/(\d+)", h)
+        if m and m.group(1) not in ids:
+            ids.append(m.group(1))
+    out = []
+    for wid in ids[:6]:
+        det = await bottle_details(page, wid)
+        await page.wait_for_timeout(DELAY)
+        out.append({"id": wid, "name": det["name"] or "",
+                    "strength": det["abv"], "age": None,
+                    "bottled": None, "vintage": None, "det": det})
+    return out
+
+
 async def bottle_details(page, wb_id):
     await page.goto(BOTTLE.format(id=wb_id), wait_until="load")
     await page.wait_for_timeout(3000)
@@ -230,12 +256,20 @@ async def main(lines):
             scored = sorted(
                 ((score(qname, qabv, qage, qvint, qdec, c), c) for c in cands),
                 key=lambda x: -x[0])
+            if not scored or scored[0][0] < 15:
+                gc = await google_candidates(page, brand, qabv, rare)
+                seen = {c["id"] for c in cands}
+                cands += [c for c in gc if c["id"] not in seen]
+                scored = sorted(
+                    ((score(qname, qabv, qage, qvint, qdec, c), c) for c in cands),
+                    key=lambda x: -x[0])
             if not scored:
                 results.append({"input": raw, "found": False})
                 continue
             top_score, top = scored[0]
-            det = await bottle_details(page, top["id"])
-            await page.wait_for_timeout(DELAY)
+            det = top.get("det") or await bottle_details(page, top["id"])
+            if not top.get("det"):
+                await page.wait_for_timeout(DELAY)
             margin = top_score - (scored[1][0] if len(scored) > 1 else 0)
             conf = max(5, min(99, top_score + min(margin, 20) / 4))
             if not verify(qname, det):
