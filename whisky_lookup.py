@@ -95,25 +95,24 @@ def parse_line(line):
     return name, abv, age, vint, dec
 
 
-def score(qname, qabv, qage, qvint, qdec, cand):
+def score_parts(qname, qabv, qage, qvint, qdec, cand):
+    """returns (total, breakdown dict) for transparency"""
     q, r = alias_tokens(qname), alias_tokens(cand["name"])
     overlap = len(q & r) / max(len(q), 1)
-    s = 50 * overlap
+    parts = {"name": round(50 * overlap, 1)}
     if qabv is not None and cand["strength"] is not None:
-        if abs(qabv - cand["strength"]) <= 0.11:
-            s += 40
-        else:
-            s -= 60
+        parts["abv"] = 40 if abs(qabv - cand["strength"]) <= 0.11 else -60
     if qage is not None and cand.get("age"):
-        if qage == cand["age"]:
-            s += 15
-        elif abs(qage - cand["age"]) >= 3:
-            s -= 15
+        parts["age"] = 15 if qage == cand["age"] else (-15 if abs(qage - cand["age"]) >= 3 else 0)
     if qvint is not None and cand.get("vintage"):
-        s += 10 if qvint == cand["vintage"] else -10
+        parts["vintage"] = 10 if qvint == cand["vintage"] else -10
     if qdec is not None and cand.get("bottled"):
-        s += 15 if qdec <= cand["bottled"] <= qdec + 9 else -15
-    return s
+        parts["decade"] = 15 if qdec <= cand["bottled"] <= qdec + 9 else -15
+    return sum(parts.values()), parts
+
+
+def score(qname, qabv, qage, qvint, qdec, cand):
+    return score_parts(qname, qabv, qage, qvint, qdec, cand)[0]
 
 
 def verify(qname, det):
@@ -271,6 +270,7 @@ async def lookup_one(page, raw, generic):
     if not scored:
         return {"input": raw, "found": False}
     top_score, top = scored[0]
+    _, breakdown = score_parts(qname, qabv, qage, qvint, qdec, top)
     det = top.get("det") or await bottle_details(page, top["id"])
     if not top.get("det"):
         await page.wait_for_timeout(DELAY)
@@ -278,6 +278,7 @@ async def lookup_one(page, raw, generic):
     conf = max(5, min(99, top_score))
     if not verify(qname, det):
         conf = min(conf, 20)
+        breakdown["verify"] = "distillery tokens missing on page -> capped"
     margin = top_score - (scored[1][0] if len(scored) > 1 else -999)
     ambiguous = 0 <= margin < 15
     alts = [{"wb_id": c["id"], "name": c["name"],
@@ -291,7 +292,7 @@ async def lookup_one(page, raw, generic):
         "rating": det["rating"], "votes": det["votes"],
         "abv": det["abv"], "lowest_price_eur": det["lowest_price_eur"],
         "shops": det["shops"], "confidence": round(conf),
-        "ambiguous": ambiguous,
+        "ambiguous": ambiguous, "score_parts": breakdown,
         "url": BOTTLE.format(id=top["id"]),
         "alternatives": alts,
     }
@@ -335,7 +336,7 @@ if __name__ == "__main__":
     lines = [l.strip() for l in sys.stdin if l.strip()]
     res = asyncio.run(main(lines))
     res.sort(key=lambda r: (not r["found"], -(r.get("rating") or 0)))
-    fields = ["input", "confidence", "ambiguous", "name", "rating",
+    fields = ["input", "confidence", "ambiguous", "score_parts", "name", "rating",
               "lowest_price_eur", "url", "votes", "abv", "shops",
               "wb_id", "alternatives"]
     with open("results.csv", "w", newline="") as f:
