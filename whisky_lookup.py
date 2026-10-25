@@ -72,8 +72,10 @@ def alias_tokens(s):
 
 
 def parse_line(line):
-    m = re.search(r"(\d+[.,]\d+)\s*%", line)
-    abv = float(m.group(1).replace(",", ".")) if m else None
+    # lines like "60% bourbon 40% sherry ... 46.0%" have several %s:
+    # the bottle's ABV is the last one
+    ms = re.findall(r"(\d+(?:[.,]\d+)?)\s*%", line)
+    abv = float(ms[-1].replace(",", ".")) if ms else None
     dec = None
     m = re.search(r"lata\s*(\d)\d", line, re.I) or re.search(r"\b(\d)0s\b", line)
     if m:
@@ -87,7 +89,7 @@ def parse_line(line):
     # a 4-digit year usually means the vintage (distillation year)
     if years:
         vint = min(years)
-    name = re.sub(r"\d+[.,]\d+\s*%", "", line)
+    name = re.sub(r"\d+(?:[.,]\d+)?\s*%", "", line)
     name = re.sub(r"\([^)]*\)|lata\s*\d+\.?", " ", name, flags=re.I)
     name = re.sub(r"\s+", " ", name).strip(" -")
     return name, abv, age, vint, dec
