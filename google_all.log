@@ -1,0 +1,715 @@
+[
+ {
+  "input": "Talisker Special Release 2024 Stone-Spun and Re-Toasted Finish 8yo 58.7%",
+  "google": [
+   {
+    "score": 44.5,
+    "id": "262140",
+    "name": "Talisker 08-year-old - Tidal Churn",
+    "abv": 58.7
+   }
+  ]
+ },
+ {
+  "input": "Talisker Wild Blue 2025 Atlantic Coastal Wine Finish 48.2%",
+  "google": [
+   {
+    "score": 58.8,
+    "id": "274457",
+    "name": "Talisker The Wild Blue",
+    "abv": 48.2
+   }
+  ]
+ },
+ {
+  "input": "Talisker Distillers Edition 2022 Amoroso Seasoned American Oak 45.8%",
+  "google": []
+ },
+ {
+  "input": "Talisker Distillers Edition 2018 Double Matured in Amoroso Sherry Wood 10yo 45.8%",
+  "google": [
+   {
+    "score": 44.5,
+    "id": "118756",
+    "name": "Talisker 2008",
+    "abv": 45.8
+   }
+  ]
+ },
+ {
+  "input": "Talikser Nest Point 2015 45.8%",
+  "google": [
+   {
+    "score": 52.5,
+    "id": "75509",
+    "name": "Talisker Neist Point",
+    "abv": 45.8
+   }
+  ]
+ },
+ {
+  "input": "Talisker DSR 2023 White, Tawny and Ruby Port Finish 59.7%",
+  "google": [
+   {
+    "score": 45.6,
+    "id": "238717",
+    "name": "Talisker The Wild Explorador",
+    "abv": 59.7
+   }
+  ]
+ },
+ {
+  "input": "Glenallachie 2014 The Sinteis Series Chinq & PX 57.8%",
+  "google": [
+   {
+    "score": 54.3,
+    "id": "275567",
+    "name": "Glenallachie 2014",
+    "abv": 57.8
+   },
+   {
+    "score": -45.7,
+    "id": "295315",
+    "name": "Glenallachie 2014",
+    "abv": 57.4
+   }
+  ]
+ },
+ {
+  "input": "Port Charlotte SC: 01 2012 Ex-Bourbon & Sherry Butts + Sauternes Finish 9yo 55.2%",
+  "google": [
+   {
+    "score": 60.8,
+    "id": "209631",
+    "name": "Port Charlotte 2012 SC: 01",
+    "abv": 55.2
+   }
+  ]
+ },
+ {
+  "input": "Blair Athol single cask Sherry Oloroso Octave 11yo 55.3%",
+  "google": [
+   {
+    "score": 52.5,
+    "id": "285845",
+    "name": "Blair Athol 2013 UD",
+    "abv": 55.3
+   }
+  ]
+ },
+ {
+  "input": "Kilchoman M&P Cask Collection Club Bourbon Barrel 13yo 54.3%",
+  "google": [
+   {
+    "score": 45.6,
+    "id": "251696",
+    "name": "Kilchoman 2010",
+    "abv": 54.3
+   },
+   {
+    "score": -54.4,
+    "id": "186843",
+    "name": "Kilchoman 2010",
+    "abv": 59.1
+   }
+  ]
+ },
+ {
+  "input": "Ben Nevis Rambler 2015 Bourbon Hogshead 7yo 62.0%",
+  "google": [
+   {
+    "score": 61.4,
+    "id": "234362",
+    "name": "Ben Nevis 2015 LoDz",
+    "abv": 62.0
+   }
+  ]
+ },
+ {
+  "input": "Ledaig 2009 single cask Sherry But 15yo 56.4%",
+  "google": [
+   {
+    "score": 54.3,
+    "id": "201816",
+    "name": "Ledaig 2009 OXH",
+    "abv": 56.4
+   },
+   {
+    "score": 54.3,
+    "id": "265121",
+    "name": "Ledaig 2009 DL",
+    "abv": 56.4
+   },
+   {
+    "score": 47.1,
+    "id": "105094",
+    "name": "Ledaig 2005 ElD",
+    "abv": 56.4
+   },
+   {
+    "score": 47.1,
+    "id": "148788",
+    "name": "Ledaig 2008 BD",
+    "abv": 56.4
+   }
+  ]
+ },
+ {
+  "input": "Mortlach 2010 Solar System by Jarek Buss Marsala Sweet Wine Finish 11yo 57.2%",
+  "google": [
+   {
+    "score": 53.6,
+    "id": "215608",
+    "name": "Mortlach 2010 MSWD",
+    "abv": 57.2
+   }
+  ]
+ },
+ {
+  "input": "Blair Athol 2013 Berry Bros & Rudd single cask Pomerol Finish 12yo 57.3%",
+  "google": [
+   {
+    "score": 60.0,
+    "id": "281990",
+    "name": "Blair Athol 2013 BR",
+    "abv": 57.3
+   }
+  ]
+ },
+ {
+  "input": "Kilkerran 2025 60% bourbon 40% sherry 16yo 46.0%",
+  "google": []
+ },
+ {
+  "input": "Waterford \"Die Ermittler\" Micro Cuv\u00e9e 2023 50%",
+  "google": []
+ },
+ {
+  "input": "Ben Nevis 2005 single cask Heavily Peated Refill Butt 14yo 53.9%",
+  "google": [
+   {
+    "score": 55.0,
+    "id": "143256",
+    "name": "Ben Nevis 2005 MBl",
+    "abv": 53.9
+   }
+  ]
+ },
+ {
+  "input": "Ballechin Vintage 2014 ex-bourbon single cask 9yo 58.4%",
+  "google": [
+   {
+    "score": 52.5,
+    "id": "261493",
+    "name": "Ballechin 2014",
+    "abv": 58.4
+   }
+  ]
+ },
+ {
+  "input": "Glenlivet old bottling stare wydanie lata 90. 12yo 40%",
+  "google": [
+   {
+    "score": 21.4,
+    "id": "268674",
+    "name": "Glenlivet 40-year-old",
+    "abv": 46.9
+   },
+   {
+    "score": 14.3,
+    "id": "175817",
+    "name": "Glenlivet 12-year-old",
+    "abv": 48.0
+   }
+  ]
+ },
+ {
+  "input": "Kilchoman 2014 Sauternes Single Cask Finish 7yo 55.7%",
+  "google": [
+   {
+    "score": 54.3,
+    "id": "200619",
+    "name": "Kilchoman 2014",
+    "abv": 55.7
+   }
+  ]
+ },
+ {
+  "input": "Ardbeg Corryvreckan 57.1% peated",
+  "google": [
+   {
+    "score": 73.3,
+    "id": "10550",
+    "name": "Ardbeg Corryvreckan",
+    "abv": 57.1
+   },
+   {
+    "score": 73.3,
+    "id": "133030",
+    "name": "Ardbeg Corryvreckan",
+    "abv": 57.1
+   }
+  ]
+ },
+ {
+  "input": "Bruichladdich 2007 Micro Provenance for Dw 13yo bourbon/sauternes 60.3%",
+  "google": [
+   {
+    "score": 51.1,
+    "id": "110012",
+    "name": "Bruichladdich 2007",
+    "abv": 60.3
+   },
+   {
+    "score": 51.1,
+    "id": "192845",
+    "name": "Bruichladdich 2007",
+    "abv": 60.3
+   },
+   {
+    "score": -48.9,
+    "id": "265578",
+    "name": "Bruichladdich 2007",
+    "abv": 62.7
+   }
+  ]
+ },
+ {
+  "input": "LAGG Corriecravie Edition - Sherry Cask finish 55%",
+  "google": [
+   {
+    "score": 21.4,
+    "id": "236689",
+    "name": "Lagg Corriecravie Edition",
+    "abv": 55.0
+   }
+  ]
+ },
+ {
+  "input": "Aberlour 16yo Double Casks (American Oak & Sherry Oak) 40%",
+  "google": [
+   {
+    "score": 10.0,
+    "id": "144532",
+    "name": "Aberlour 16-year-old",
+    "abv": 43.0
+   },
+   {
+    "score": 10.0,
+    "id": "237130",
+    "name": "Aberlour 16-year-old",
+    "abv": 43.0
+   },
+   {
+    "score": 10.0,
+    "id": "190075",
+    "name": "Aberlour 16-year-old",
+    "abv": 40.0
+   },
+   {
+    "score": 10.0,
+    "id": "274104",
+    "name": "Aberlour 16-year-old",
+    "abv": 43.0
+   },
+   {
+    "score": 10.0,
+    "id": "46209",
+    "name": "Aberlour 16-year-old",
+    "abv": 40.0
+   }
+  ]
+ },
+ {
+  "input": "Ballechin SFTC Oloroso Sherry Cask Matured 10yo cask no. 343 59.1%",
+  "google": [
+   {
+    "score": 45.6,
+    "id": "172354",
+    "name": "Ballechin 2009",
+    "abv": 59.1
+   },
+   {
+    "score": -54.4,
+    "id": "169571",
+    "name": "Ballechin 2009",
+    "abv": 58.8
+   },
+   {
+    "score": -54.4,
+    "id": "200588",
+    "name": "Ballechin 2009",
+    "abv": 58.4
+   }
+  ]
+ },
+ {
+  "input": "KOZUBA 10 yo high wheat rye 49,5%",
+  "google": [
+   {
+    "score": 56.7,
+    "id": "231437",
+    "name": "Kozuba 10-year-old",
+    "abv": 49.5
+   }
+  ]
+ },
+ {
+  "input": "The Finest Malts MACDUFF single cask 11yo 53.4% sherry hogshead",
+  "google": [
+   {
+    "score": 54.3,
+    "id": "239821",
+    "name": "Macduff 2011 TFM",
+    "abv": 53.4
+   }
+  ]
+ },
+ {
+  "input": "TEANINICH 2010 WHISKY AGE 13yo 59.4%",
+  "google": [
+   {
+    "score": 77.5,
+    "id": "256371",
+    "name": "Teaninich 2010 WAGE",
+    "abv": 59.4
+   },
+   {
+    "score": 65.0,
+    "id": "295638",
+    "name": "Teaninich 2010 AD",
+    "abv": 59.4
+   }
+  ]
+ },
+ {
+  "input": "Cadenhead's Enigma 2008 Manzanilla hogsheads 16yo 53.6%",
+  "google": [
+   {
+    "score": 54.3,
+    "id": "247478",
+    "name": "Speyside Single Malt 2008 CA",
+    "abv": 53.6
+   }
+  ]
+ },
+ {
+  "input": "Old Pulteney SC for Lo\u017ca D\u017centelmen\u00f3w cask 1417 53.4% 15yo",
+  "google": [
+   {
+    "score": 52.5,
+    "id": "72573",
+    "name": "Old Pulteney 1997",
+    "abv": 53.4
+   },
+   {
+    "score": 52.5,
+    "id": "217042",
+    "name": "Old Pulteney 2006",
+    "abv": 53.4
+   },
+   {
+    "score": 52.5,
+    "id": "296252",
+    "name": "Old Pulteney 2010 OXH",
+    "abv": 53.4
+   },
+   {
+    "score": 46.2,
+    "id": "300963",
+    "name": "Pulteney 2007 DR",
+    "abv": 53.4
+   }
+  ]
+ },
+ {
+  "input": "Talisker 10 years old 45.8% (stare butelkowanie lata 70.)",
+  "google": [
+   {
+    "score": 77.5,
+    "id": "182815",
+    "name": "Talisker 10-year-old",
+    "abv": 45.8
+   },
+   {
+    "score": 77.5,
+    "id": "35001",
+    "name": "Talisker 10-year-old",
+    "abv": 45.8
+   },
+   {
+    "score": 77.5,
+    "id": "15128",
+    "name": "Talisker 10-year-old",
+    "abv": 45.8
+   },
+   {
+    "score": 52.5,
+    "id": "221000",
+    "name": "Talisker The Distillers Edition",
+    "abv": 45.8
+   }
+  ]
+ },
+ {
+  "input": "Port Charlotte PMC:01 2013 Cask Exploration Series 9yo 54.5%",
+  "google": [
+   {
+    "score": 67.8,
+    "id": "231824",
+    "name": "Port Charlotte 2013 PMC: 01",
+    "abv": 54.5
+   }
+  ]
+ },
+ {
+  "input": "Lochlea Distillery Bottling 5yo Bourbon, Oloroso Sherry, PX Sherry 50%",
+  "google": [
+   {
+    "score": 5.6,
+    "id": "245909",
+    "name": "Lochlea 2018",
+    "abv": 50.0
+   }
+  ]
+ },
+ {
+  "input": "Kilkerran HP Peat in Progress batch 6 - 75% bourbon 25% sherry 57.4%",
+  "google": [
+   {
+    "score": 44.5,
+    "id": "212085",
+    "name": "Kilkerran Heavily Peated",
+    "abv": 57.4
+   },
+   {
+    "score": 44.5,
+    "id": "248082",
+    "name": "Kilkerran 08-year-old",
+    "abv": 57.4
+   }
+  ]
+ },
+ {
+  "input": "Bruichladdich 10 years old (stare butelkowanie)",
+  "google": [
+   {
+    "score": 37.5,
+    "id": "295982",
+    "name": "Bruichladdich 10-year-old",
+    "abv": 50.0
+   },
+   {
+    "score": 37.5,
+    "id": "294019",
+    "name": "Bruichladdich 10-year-old",
+    "abv": 50.0
+   },
+   {
+    "score": 25.0,
+    "id": "112320",
+    "name": "Port Charlotte 10-year-old",
+    "abv": 50.0
+   },
+   {
+    "score": 12.5,
+    "id": "86884",
+    "name": "Bruichladdich The Laddie Ten",
+    "abv": 50.0
+   }
+  ]
+ },
+ {
+  "input": "Lindores THE EXCLUSIVE CASK 4yo 62.4% for Tudor House",
+  "google": [
+   {
+    "score": 46.2,
+    "id": "216826",
+    "name": "Lindores Abbey 2018",
+    "abv": 62.4
+   }
+  ]
+ },
+ {
+  "input": "The LAKES No. 5 - Oloroso, Px, Red wine casks 52%",
+  "google": [
+   {
+    "score": 20.0,
+    "id": "208633",
+    "name": "The Lakes The Whiskymaker's Reserve No. 5",
+    "abv": 52.0
+   },
+   {
+    "score": 0.0,
+    "id": "230940",
+    "name": "OOPS!",
+    "abv": null
+   }
+  ]
+ },
+ {
+  "input": "Glen Scotia Festival Release 2024 UNPEATED FINO SHERRY 56,2%",
+  "google": [
+   {
+    "score": 52.5,
+    "id": "249900",
+    "name": "Glen Scotia 09-year-old",
+    "abv": 56.2
+   }
+  ]
+ },
+ {
+  "input": "Caol Ila 2009 van Wees - The Ultimate Cask Strength 8yo Refill Butt 59.7%",
+  "google": [
+   {
+    "score": 62.2,
+    "id": "125449",
+    "name": "Caol Ila 2009 vW",
+    "abv": 59.7
+   }
+  ]
+ },
+ {
+  "input": "Craigellachie 2010 MSWD C\u00e0rn M\u00f2r - Strictly Limited 12yo PX sherry 47.5%",
+  "google": [
+   {
+    "score": 56.7,
+    "id": "220155",
+    "name": "Craigellachie 2010 MSWD",
+    "abv": 47.5
+   },
+   {
+    "score": 56.7,
+    "id": "191071",
+    "name": "Craigellachie 2010 MSWD",
+    "abv": 47.5
+   }
+  ]
+ },
+ {
+  "input": "Ballechin 2008 14YO SC 1st Fill Ruby Port Hogshead 58.3%",
+  "google": [
+   {
+    "score": 51.1,
+    "id": "239960",
+    "name": "Ballechin 2008 vW",
+    "abv": 58.3
+   }
+  ]
+ },
+ {
+  "input": "Clydeside - 2023 Limited Edition Lowland 60,6%",
+  "google": [
+   {
+    "score": 60.0,
+    "id": "238317",
+    "name": "The Clydeside Distillery 2023",
+    "abv": 60.6
+   }
+  ]
+ },
+ {
+  "input": "Johnnie Walker Black Label Extra Special Old Scotch Whisky (lata 80.)",
+  "google": [
+   {
+    "score": 22.2,
+    "id": "50939",
+    "name": "Johnnie Walker Black Label",
+    "abv": 40.0
+   },
+   {
+    "score": 22.2,
+    "id": "181551",
+    "name": "Johnnie Walker Black Label",
+    "abv": 42.0
+   },
+   {
+    "score": 22.2,
+    "id": "90302",
+    "name": "Johnnie Walker Black Label",
+    "abv": 40.0
+   },
+   {
+    "score": 22.2,
+    "id": "228834",
+    "name": "Johnnie Walker Black Label",
+    "abv": 43.0
+   },
+   {
+    "score": 22.2,
+    "id": "113994",
+    "name": "Johnnie Walker Black Label",
+    "abv": 40.0
+   },
+   {
+    "score": 22.2,
+    "id": "268439",
+    "name": "Johnnie Walker Black Label",
+    "abv": null
+   }
+  ]
+ },
+ {
+  "input": "TALISKER WILDER SEAS X PARLEY 48,6%",
+  "google": [
+   {
+    "score": 70.0,
+    "id": "229467",
+    "name": "Talisker Wilder Seas",
+    "abv": 48.6
+   }
+  ]
+ },
+ {
+  "input": "Bunnahabhain Signatory Vintage 9yo 1st fill Pinot Noir 46%",
+  "google": [
+   {
+    "score": 11.1,
+    "id": "207347",
+    "name": "Bunnahabhain 2012 SV",
+    "abv": 64.8
+   },
+   {
+    "score": 11.1,
+    "id": "205099",
+    "name": "Bunnahabhain 2012 SV",
+    "abv": 65.3
+   },
+   {
+    "score": 11.1,
+    "id": "72746",
+    "name": "Bunnahabhain 2006 SV",
+    "abv": 61.8
+   },
+   {
+    "score": 11.1,
+    "id": "75471",
+    "name": "Bunnahabhain 2006 SV",
+    "abv": 62.2
+   },
+   {
+    "score": 5.6,
+    "id": "294935",
+    "name": "Staoisha 2013 SV",
+    "abv": 46.0
+   },
+   {
+    "score": 5.6,
+    "id": "235160",
+    "name": "Staoisha 2013 SV",
+    "abv": 54.7
+   }
+  ]
+ },
+ {
+  "input": "Mosgaard single malt whisky from Denmark ORGANIC peated/bourbon cask 48.4%",
+  "google": [
+   {
+    "score": 55.0,
+    "id": "144117",
+    "name": "Mosgaard Organic - Peated",
+    "abv": 48.4
+   }
+  ]
+ }
+]
