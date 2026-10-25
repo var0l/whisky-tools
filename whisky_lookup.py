@@ -201,26 +201,32 @@ async def main(lines):
                    "of", "de", "and", "a", "an", "year", "years", "old",
                    "yo", "biblical", "peated", "fortified", "wine", "m", "h",
                    "mh", "m&h", "sc", "edition", "release", "finish",
-                   "stare", "butelkowanie", "wydanie"}
+                   "stare", "butelkowanie", "wydanie", "vintage"}
         for raw in lines:
             qname, qabv, qage, qvint, qdec = parse_line(raw)
-            cands = await search_candidates(page, quote_plus(qname))
-            await page.wait_for_timeout(DELAY)
-            def best(cs):
-                scored = sorted(
-                    ((score(qname, qabv, qage, qvint, qdec, c), c) for c in cs),
-                    key=lambda x: -x[0])
-                return scored[0][0] if scored else -999
-            if len(cands) < 3 or best(cands) < 55:
-                toks = re.findall(r"[a-z0-9&]+", qname.lower())
-                brand = toks[0] if toks else ""
-                rare = [t for t in toks[1:] if t not in generic]
-                q2 = (brand + " " + " ".join(rare)).strip()
-                if q2.lower() != qname.lower():
-                    more = await search_candidates(page, quote_plus(q2))
-                    await page.wait_for_timeout(DELAY)
-                    ids = {c["id"] for c in cands}
-                    cands += [c for c in more if c["id"] not in ids]
+            toks = re.findall(r"[a-z0-9&]+", qname.lower())
+            brand = toks[0] if toks else ""
+            rare = [t for t in toks[1:] if t not in generic]
+            queries = [qname]
+            if qvint:
+                queries.append(f"{brand} {qvint}")
+            q2 = (brand + " " + " ".join(rare)).strip()
+            if q2:
+                queries.append(q2)
+            if qvint and rare:
+                queries.append(f"{brand} {qvint} " + " ".join(rare))
+            cands, ids, best_score = [], set(), -999
+            for q in dict.fromkeys(queries):
+                more = await search_candidates(page, quote_plus(q))
+                await page.wait_for_timeout(DELAY)
+                new = [c for c in more if c["id"] not in ids]
+                ids.update(c["id"] for c in new)
+                cands += new
+                if cands:
+                    best_score = max(
+                        score(qname, qabv, qage, qvint, qdec, c) for c in cands)
+                if best_score >= 70:
+                    break
             scored = sorted(
                 ((score(qname, qabv, qage, qvint, qdec, c), c) for c in cands),
                 key=lambda x: -x[0])
