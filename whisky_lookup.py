@@ -4,81 +4,152 @@ its rating, ABV and lowest listed shop price (EUR), plus a match-confidence
 score. Drives the session's real Chrome over CDP (Cloudflare blocks plain HTTP).
 
 Usage:  python3 whisky_lookup.py < whiskies.txt
-Input lines: free text incl. ABV like "54,2%" or "58.7%". Decade hints like
-"lata 80" (1980s) / "(stare butelkowanie lata 70.)" are understood.
+Input lines: free text incl. ABV like "54,2%" or "58.7%", optional age
+("8yo", "10 years old"), vintage year, bottler names, and Polish hints
+("lata 80" = 1980s, "stare butelkowanie" = old bottling).
 """
 
-import asyncio, csv, json, re, sys
+import asyncio, csv, json, re, sys, unicodedata
 from urllib.parse import quote_plus
 from playwright.async_api import async_playwright
 
 CDP = "http://localhost:29229"
 SEARCH = "https://www.whiskybase.com/search?q={q}"
 BOTTLE = "https://www.whiskybase.com/whiskies/whisky/{id}"
-DELAY = 1200  # ms between page loads
+DELAY = 1200
 
-# hardcoded FX approximations -> EUR
 FX = {"€": 1.0, "£": 1.17, "$": 0.92}
+
+# spelled-out bottler name -> Whiskybase code (and back, via token set)
+ALIASES = [
+    ("van wees", "vw"), ("the ultimate", "vw"),
+    ("signatory", "sv"), ("signatory vintage", "sv"),
+    ("cadenhead", "ca"), ("cadenhead's", "ca"), ("cadenheads", "ca"),
+    ("berry bros", "br"), ("berry bros & rudd", "br"), ("bbr", "br"),
+    ("jarek buss", "mswd"), ("mswd", "mswd"),
+    ("the finest malts", "tfm"),
+    ("whisky age", "wage"),
+    ("douglas laing", "dl"),
+    ("gordon macphail", "gm"), ("gordon & macphail", "gm"),
+    ("gordon and macphail", "gm"),
+    ("loza dzentelmenow", "lodz"), ("loża dżentelmenów", "lodz"),
+    ("carn mor", "cm"), ("càrn mòr", "cm"),
+    ("murray mcdavid", "mm"),
+    ("scotch malt whisky society", "smws"),
+    ("artist", "lmdw"), ("la maison du whisky", "lmdw"),
+    ("royal mile whiskies", "rmw"),
+    ("the whisky exchange", "twe"),
+    ("decadent drinks", "dd"),
+    ("whisky sponge", "wsp"),
+    ("north star", "nss"),
+    ("distilleria", "dt"),
+    ("hepburn's choice", "hisp"), ("hepburns choice", "hisp"),
+    ("hi-spirits", "hisp"),
+    ("glenkeir", "glk"),
+]
+
+
+def strip_acc(s):
+    return "".join(c for c in unicodedata.normalize("NFKD", s)
+                   if not unicodedata.combining(c))
+
+
+def norm_name(s):
+    s = strip_acc(s.lower())
+    s = re.sub(r"['’]", "", s)
+    s = re.sub(r"[^a-z0-9&]+", " ", s)
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
+
+def alias_tokens(s):
+    """token set with spelled-out bottler phrases mapped to WB codes"""
+    t = norm_name(s)
+    for phrase, code in ALIASES:
+        if phrase in t:
+            t = t.replace(phrase, " " + code + " ")
+    return set(re.findall(r"[a-z0-9]+", t))
 
 
 def parse_line(line):
     m = re.search(r"(\d+[.,]\d+)\s*%", line)
     abv = float(m.group(1).replace(",", ".")) if m else None
-    # decade hints: "lata 80", "lata 90.", "(lata 70.)", "80s"
     dec = None
     m = re.search(r"lata\s*(\d)\d", line, re.I) or re.search(r"\b(\d)0s\b", line)
     if m:
         dec = 1900 + int(m.group(1)) * 10
+    age = None
+    m = re.search(r"(\d{1,2})\s*(?:yo|y\.o\.|years?\s*old|year-old)\b", line, re.I)
+    if m:
+        age = int(m.group(1))
+    vint = None
+    years = [int(y) for y in re.findall(r"\b(19\d{2}|20[0-2]\d)\b", line)]
+    # a 4-digit year usually means the vintage (distillation year)
+    if years:
+        vint = min(years)
     name = re.sub(r"\d+[.,]\d+\s*%", "", line)
     name = re.sub(r"\([^)]*\)|lata\s*\d+\.?", " ", name, flags=re.I)
     name = re.sub(r"\s+", " ", name).strip(" -")
-    return name, abv, dec
+    return name, abv, age, vint, dec
 
 
-def tokens(s):
-    return set(re.findall(r"[a-z0-9]+", s.lower()))
-
-
-def score(qname, qabv, qdec, cand):
-    """cand: {name, strength, bottled}. ABV mismatch is near-fatal."""
-    q, r = tokens(qname), tokens(cand["name"])
+def score(qname, qabv, qage, qvint, qdec, cand):
+    q, r = alias_tokens(qname), alias_tokens(cand["name"])
     overlap = len(q & r) / max(len(q), 1)
-    s = 55 * overlap
+    s = 50 * overlap
     if qabv is not None and cand["strength"] is not None:
         if abs(qabv - cand["strength"]) <= 0.11:
-            s += 45
+            s += 40
         else:
-            s -= 60  # almost certainly the wrong bottle
-    if qdec is not None and cand["bottled"]:
-        if qdec <= cand["bottled"] <= qdec + 9:
+            s -= 60
+    if qage is not None and cand.get("age"):
+        if qage == cand["age"]:
             s += 15
-        else:
+        elif abs(qage - cand["age"]) >= 3:
             s -= 15
+    if qvint is not None and cand.get("vintage"):
+        s += 10 if qvint == cand["vintage"] else -10
+    if qdec is not None and cand.get("bottled"):
+        s += 15 if qdec <= cand["bottled"] <= qdec + 9 else -15
     return s
+
+
+def verify(qname, det):
+    """page-level sanity: input's distillery tokens must appear on the page"""
+    qt = alias_tokens(qname)
+    page_t = alias_tokens(" ".join(filter(None, [
+        det.get("name"), det.get("distillery"), det.get("bottler"),
+        det.get("series")])))
+    known_stop = {"ml", "vol", "cl", "single", "malt", "cask"}
+    qt -= known_stop
+    return len(qt & page_t) > 0
 
 
 async def search_candidates(page, query):
     await page.goto(SEARCH.format(q=query), wait_until="load")
     await page.wait_for_timeout(4500)
     rows = await page.evaluate("""() => {
+        const heads = [...document.querySelectorAll('thead th')].map(t => t.innerText.trim().toLowerCase());
+        const idx = n => heads.indexOf(n);
         const out = [];
-        document.querySelectorAll('tr').forEach(tr => {
+        document.querySelectorAll('tbody tr').forEach(tr => {
             const a = tr.querySelector('a[href*="/whiskies/whisky/"]');
             if (!a) return;
-            const id = a.href.match(/whiskies\\/whisky\\/(\\d+)/)[1];
-            const t = tr.innerText;
-            const str = t.match(/(\\d+[.,]\\d+)\\s*%/);
-            // bottled year: a 19xx/20xx in the row, prefer the one near "Bottled" col;
-            // simplest: take all years, pick any plausible bottled year
-            const years = [...t.matchAll(/\\b(19|20)\\d{2}\\b/g)].map(x => +x[0]);
-            out.push({id, name: a.innerText.trim(),
-                      strength: str ? parseFloat(str[1].replace(',', '.')) : null,
-                      bottled: years.length ? Math.max(...years) : null});
+            const tds = [...tr.querySelectorAll('td')].map(t => t.innerText.trim());
+            const m = a.href.match(/whiskies\\/whisky\\/(\\d+)/);
+            const num = i => { const v = tds[i]; return v ? parseFloat(v.replace(',', '.')) : null; };
+            const yr = i => { const m2 = (tds[i] || '').match(/(19|20)\\d{2}/); return m2 ? +m2[0] : null; };
+            out.push({id: m[1], name: a.innerText.trim(),
+                      strength: num(idx('strength')),
+                      age: num(idx('age')),
+                      bottled: yr(idx('bottled')),
+                      vintage: yr(idx('vintage'))});
         });
         return out;
     }""")
     seen, cands = set(), []
     for r in rows:
+        key = (r["id"], r["name"])
         if r["id"] not in seen:
             seen.add(r["id"])
             cands.append(r)
@@ -90,7 +161,8 @@ async def bottle_details(page, wb_id):
     await page.wait_for_timeout(3000)
     text = await page.inner_text("body")
     d = {"name": None, "rating": None, "votes": None, "abv": None,
-         "shops": None, "lowest_price_eur": None}
+         "shops": None, "lowest_price_eur": None,
+         "distillery": None, "bottler": None, "series": None}
     m = re.search(r"([\d.]+)\s*/\s*100", text)
     if m:
         d["rating"] = float(m.group(1))
@@ -101,11 +173,17 @@ async def bottle_details(page, wb_id):
     m = re.search(r"Strength\s*\n\s*([\d.]+)\s*%", text)
     if m:
         d["abv"] = float(m.group(1))
+    for field, key in [(r"Distillery\s*\n\s*([^\n]+)", "distillery"),
+                       (r"Bottler\s*\n\s*([^\n]+)", "bottler"),
+                       (r"Bottling series\s*\n\s*([^\n]+)", "series")]:
+        m = re.search(field, text)
+        if m:
+            d[key] = m.group(1).strip()
     m = re.search(r"Found (\d+) online shops?\.\s*Lowest price:\s*\n?\s*([€£$])\s*([\d.,]+)", text)
     if m:
         d["shops"] = int(m.group(1))
-        price = float(m.group(3).replace(",", ""))
-        d["lowest_price_eur"] = round(price * FX.get(m.group(2), 1.0), 2)
+        d["lowest_price_eur"] = round(
+            float(m.group(3).replace(",", "")) * FX.get(m.group(2), 1.0), 2)
     try:
         d["name"] = (await page.inner_text("h1")).strip().replace("\n", " ")
     except Exception:
@@ -121,15 +199,16 @@ async def main(lines):
         results = []
         generic = {"apex", "terroir", "single", "cask", "whisky", "the",
                    "of", "de", "and", "a", "an", "year", "years", "old",
-                   "biblical", "peated", "fortified", "wine", "m", "h",
-                   "mh", "m&h", "sc", "yo", "edition", "release"}
+                   "yo", "biblical", "peated", "fortified", "wine", "m", "h",
+                   "mh", "m&h", "sc", "edition", "release", "finish",
+                   "stare", "butelkowanie", "wydanie"}
         for raw in lines:
-            qname, qabv, qdec = parse_line(raw)
+            qname, qabv, qage, qvint, qdec = parse_line(raw)
             cands = await search_candidates(page, quote_plus(qname))
             await page.wait_for_timeout(DELAY)
             def best(cs):
                 scored = sorted(
-                    ((score(qname, qabv, qdec, c), c) for c in cs),
+                    ((score(qname, qabv, qage, qvint, qdec, c), c) for c in cs),
                     key=lambda x: -x[0])
                 return scored[0][0] if scored else -999
             if len(cands) < 3 or best(cands) < 55:
@@ -143,7 +222,7 @@ async def main(lines):
                     ids = {c["id"] for c in cands}
                     cands += [c for c in more if c["id"] not in ids]
             scored = sorted(
-                ((score(qname, qabv, qdec, c), c) for c in cands),
+                ((score(qname, qabv, qage, qvint, qdec, c), c) for c in cands),
                 key=lambda x: -x[0])
             if not scored:
                 results.append({"input": raw, "found": False})
@@ -153,13 +232,17 @@ async def main(lines):
             await page.wait_for_timeout(DELAY)
             margin = top_score - (scored[1][0] if len(scored) > 1 else 0)
             conf = max(5, min(99, top_score + min(margin, 20) / 4))
+            if not verify(qname, det):
+                conf = min(conf, 20)
+            not_found = conf < 15
             alts = [{"wb_id": c["id"], "name": c["name"],
                      "strength": c["strength"], "bottled": c["bottled"],
                      "url": BOTTLE.format(id=c["id"])}
-                    for _, c in scored[1:4] if top_score < 60 or _ < 40]
+                    for _, c in scored[1:4] if conf < 70]
             results.append({
-                "input": raw, "found": True, "wb_id": top["id"],
+                "input": raw, "found": not not_found, "wb_id": top["id"],
                 "name": det["name"] or top["name"],
+                "distillery": det["distillery"], "bottler": det["bottler"],
                 "rating": det["rating"], "votes": det["votes"],
                 "abv": det["abv"], "lowest_price_eur": det["lowest_price_eur"],
                 "shops": det["shops"], "confidence": round(conf),
@@ -194,6 +277,8 @@ if __name__ == "__main__":
         if k == "price":
             v = r.get("lowest_price_eur")
             return f"€{v}" if v else "—"
+        if k == "name" and not r.get("found", True):
+            return "NOT FOUND"
         v = r.get(k)
         return "—" if v in (None, "") else str(v)
     widths = [(k, t, min(w, max(len(t), *(len(cell(r, k)) for r in res))) if w else None)
