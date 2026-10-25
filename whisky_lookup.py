@@ -256,11 +256,9 @@ async def main(lines):
 if __name__ == "__main__":
     lines = [l.strip() for l in sys.stdin if l.strip()]
     res = asyncio.run(main(lines))
-    res.sort(key=lambda r: (r.get("rating") is not None, r.get("rating") or 0),
-             reverse=True)
-    fields = ["input", "found", "name", "rating", "votes",
-              "abv", "lowest_price_eur", "shops", "confidence",
-              "wb_id", "url", "alternatives"]
+    res.sort(key=lambda r: (not r["found"], -(r.get("rating") or 0)))
+    fields = ["input", "confidence", "name", "rating", "lowest_price_eur",
+              "url", "votes", "abv", "shops", "wb_id", "alternatives"]
     with open("results.csv", "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
@@ -269,10 +267,9 @@ if __name__ == "__main__":
             row["alternatives"] = json.dumps(row.get("alternatives", []))
             w.writerow({k: row.get(k) for k in fields})
 
-    cols = [("input", "Input", 36), ("name", "Match", 28),
-            ("rating", "Rating", 6), ("votes", "Votes", 5),
-            ("abv", "ABV", 5), ("price", "Price €", 8),
-            ("confidence", "Conf%", 5), ("url", "Whiskybase link", 0)]
+    cols = [("input", "Input", 36), ("confidence", "Conf%", 5),
+            ("name", "Match", 28), ("rating", "Rating", 6),
+            ("price", "Price €", 8), ("url", "Whiskybase link", 0)]
     def cell(r, k):
         if k == "price":
             v = r.get("lowest_price_eur")
