@@ -256,7 +256,13 @@ async def main(lines):
             scored = sorted(
                 ((score(qname, qabv, qage, qvint, qdec, c), c) for c in cands),
                 key=lambda x: -x[0])
-            if not scored or scored[0][0] < 15:
+            # Google fallback trigger: nothing found, weak match (raw score
+            # <45 ≈ final conf <50), or top candidate's ABV doesn't match
+            # exactly (wrong ABV ≈ wrong bottle, per user rule)
+            abv_mismatch = (scored and qabv is not None
+                            and scored[0][1]["strength"] is not None
+                            and abs(qabv - scored[0][1]["strength"]) > 0.11)
+            if not scored or scored[0][0] < 45 or abv_mismatch:
                 gc = await google_candidates(page, brand, qabv, rare)
                 seen = {c["id"] for c in cands}
                 cands += [c for c in gc if c["id"] not in seen]

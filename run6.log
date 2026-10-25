@@ -19,12 +19,13 @@ Ballechin 2008 14YO SC 1st Fill Ruby | 76    | Ballechin 2008 vW            | 87
 Kilchoman M&P Cask Collection Club B | 71    | Kilchoman 2010               | 87.79  | €151.56 | https://www.whiskybase.com/whiskies/whisky/251696
 Ben Nevis 2005 single cask Heavily P | 85    | Ben Nevis 2005 MBl           | 87.71  | €100.0  | https://www.whiskybase.com/whiskies/whisky/143256
 Cadenhead's Enigma 2008 Manzanilla h | 86    | Blended Malt Scotch Whisky 2 | 87.47  | €140.0  | https://www.whiskybase.com/whiskies/whisky/276961
-Kilkerran HP Peat in Progress batch  | 45    | Kilkerran Heavily Peated     | 87.44  | €70.0   | https://www.whiskybase.com/whiskies/whisky/212085
-                                       alt: Kilkerran 08-year-old (57.4%) https://www.whiskybase.com/whiskies/whisky/248082
+Kilkerran HP Peat in Progress batch  | 50    | Kilkerran Heavily Peated     | 87.44  | €70.0   | https://www.whiskybase.com/whiskies/whisky/212085
                                        alt: Kilkerran 15-year-old
 Single Cask - Madeira Wood (51.1%) https://www.whiskybase.com/whiskies/whisky/142372
                                        alt: Bowmore Islay Single Malt Whisky
 Sherriff's (75%) https://www.whiskybase.com/whiskies/whisky/129762
+                                       alt: Bowmore 08-year-old
+Sherriff's (75%) https://www.whiskybase.com/whiskies/whisky/123600
 Port Charlotte PMC:01 2013 Cask Expl | 99    | Port Charlotte 2013 PMC: 01  | 87.39  | €69.99  | https://www.whiskybase.com/whiskies/whisky/231824
 The LAKES No. 5 - Oloroso, Px, Red w | 21    | The Lakes The Whiskymaker's  | 87.37  | €60.0   | https://www.whiskybase.com/whiskies/whisky/208633
                                        alt: The Lakes The Whiskymaker's Reserve No. 7 (52%) https://www.whiskybase.com/whiskies/whisky/238155
@@ -97,8 +98,7 @@ KOZUBA 10 yo high wheat rye 49,5%    | 77    | Kozuba 10-year-old           | 84
 Blair Athol single cask Sherry Oloro | 52    | Blair Athol 2013 UD          | 84.86  | —       | https://www.whiskybase.com/whiskies/whisky/285845
                                        alt: Blair Athol 2009 MBa (55.3%) https://www.whiskybase.com/whiskies/whisky/252698
                                        alt: Blair Athol 2009 JE (55.3%) https://www.whiskybase.com/whiskies/whisky/252759
-                                       alt: Blair Athol 2013 JWC
-Single Cask Nation (61.8%) https://www.whiskybase.com/whiskies/whisky/290211
+                                       alt: Blair Athol 1997 ED (55.3%) https://www.whiskybase.com/whiskies/whisky/180624
 Caol Ila 2009 van Wees - The Ultimat | 99    | Caol Ila 2009 vW             | 84.86  | —       | https://www.whiskybase.com/whiskies/whisky/125449
 Bunnahabhain Signatory Vintage 9yo 1 | 26    | Bunnahabhain 2007 SV Moine   | 84.75  | —       | https://www.whiskybase.com/whiskies/whisky/78945
                                        alt: Bunnahabhain 2005 SV
@@ -132,7 +132,7 @@ Extra Special Old Scotc (40%) https://www.whiskybase.com/whiskies/whisky/199765
 Bla (43%) https://www.whiskybase.com/whiskies/whisky/114428
                                        alt: Johnnie Walker Black Label
 Extra Special Old Scotc (43%) https://www.whiskybase.com/whiskies/whisky/268561
-Talisker 10 years old 45.8% (stare b | 93    | Talisker 10-year-old         | 84.08  | €28.0   | https://www.whiskybase.com/whiskies/whisky/182815
+Talisker 10 years old 45.8% (stare b | 93    | Talisker 10-year-old         | 84.07  | €28.0   | https://www.whiskybase.com/whiskies/whisky/182815
 Mosgaard single malt whisky from Den | 60    | Mosgaard Organic - Peated    | 83.67  | €79.99  | https://www.whiskybase.com/whiskies/whisky/144117
                                        alt: Mosgaard Organic
 Single Malt Whisky (46.4%) https://www.whiskybase.com/whiskies/whisky/230251
@@ -317,16 +317,9 @@ Glen Scotia Festival Release 2024 UN | 89    | Glen Scotia 09-year-old      | 0.
     "abv": 57.4,
     "lowest_price_eur": 70.0,
     "shops": 15,
-    "confidence": 45,
+    "confidence": 50,
     "url": "https://www.whiskybase.com/whiskies/whisky/212085",
     "alternatives": [
-      {
-        "wb_id": "248082",
-        "name": "Kilkerran 08-year-old",
-        "strength": 57.4,
-        "bottled": null,
-        "url": "https://www.whiskybase.com/whiskies/whisky/248082"
-      },
       {
         "wb_id": "142372",
         "name": "Kilkerran 15-year-old\nSingle Cask - Madeira Wood",
@@ -340,6 +333,13 @@ Glen Scotia Festival Release 2024 UN | 89    | Glen Scotia 09-year-old      | 0.
         "strength": 75,
         "bottled": null,
         "url": "https://www.whiskybase.com/whiskies/whisky/129762"
+      },
+      {
+        "wb_id": "123600",
+        "name": "Bowmore 08-year-old\nSherriff's",
+        "strength": 75,
+        "bottled": 1965,
+        "url": "https://www.whiskybase.com/whiskies/whisky/123600"
       }
     ]
   },
@@ -645,7 +645,7 @@ Glen Scotia Festival Release 2024 UN | 89    | Glen Scotia 09-year-old      | 0.
     "distillery": "Bruichladdich",
     "bottler": "Distillery Bottling",
     "rating": 86.16,
-    "votes": 214,
+    "votes": 215,
     "abv": 50.0,
     "lowest_price_eur": 70.2,
     "shops": 19,
@@ -937,11 +937,11 @@ Glen Scotia Festival Release 2024 UN | 89    | Glen Scotia 09-year-old      | 0.
         "url": "https://www.whiskybase.com/whiskies/whisky/252759"
       },
       {
-        "wb_id": "290211",
-        "name": "Blair Athol 2013 JWC\nSingle Cask Nation",
-        "strength": 61.8,
-        "bottled": 2025,
-        "url": "https://www.whiskybase.com/whiskies/whisky/290211"
+        "wb_id": "180624",
+        "name": "Blair Athol 1997 ED",
+        "strength": 55.3,
+        "bottled": null,
+        "url": "https://www.whiskybase.com/whiskies/whisky/180624"
       }
     ]
   },
@@ -1136,8 +1136,8 @@ Glen Scotia Festival Release 2024 UN | 89    | Glen Scotia 09-year-old      | 0.
     "name": "Talisker 10-year-old",
     "distillery": "Talisker",
     "bottler": "Distillery Bottling",
-    "rating": 84.08,
-    "votes": 1473,
+    "rating": 84.07,
+    "votes": 1474,
     "abv": 45.8,
     "lowest_price_eur": 28.0,
     "shops": 64,
@@ -1245,5 +1245,8 @@ Glen Scotia Festival Release 2024 UN | 89    | Glen Scotia 09-year-old      | 0.
     "confidence": 89,
     "url": "https://www.whiskybase.com/whiskies/whisky/305803",
     "alternatives": []
+  }
+]
+ "alternatives": []
   }
 ]
