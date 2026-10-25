@@ -9,7 +9,7 @@ Input lines: free text incl. ABV like "54,2%" or "58.7%", optional age
 ("lata 80" = 1980s, "stare butelkowanie" = old bottling).
 """
 
-import asyncio, csv, json, re, sys, unicodedata
+import asyncio, csv, json, os, re, sys, unicodedata
 from urllib.parse import quote_plus
 from playwright.async_api import async_playwright
 
@@ -184,7 +184,13 @@ async def google_candidates(page, brand, qabv, rare):
     return out
 
 
+CACHE = "cache"
+
+
 async def bottle_details(page, wb_id):
+    cf = os.path.join(CACHE, f"{wb_id}.json")
+    if os.path.exists(cf):
+        return json.load(open(cf))
     await page.goto(BOTTLE.format(id=wb_id), wait_until="load")
     await page.wait_for_timeout(3000)
     text = await page.inner_text("body")
@@ -216,7 +222,79 @@ async def bottle_details(page, wb_id):
         d["name"] = (await page.inner_text("h1")).strip().replace("\n", " ")
     except Exception:
         pass
+    if wb_id not in (None, ""):
+        os.makedirs(CACHE, exist_ok=True)
+        json.dump(d, open(cf, "w"))
     return d
+
+
+async def lookup_one(page, raw, generic):
+    qname, qabv, qage, qvint, qdec = parse_line(raw)
+    toks = re.findall(r"[a-z0-9&]+", qname.lower())
+    brand = toks[0] if toks else ""
+    rare = [t for t in toks[1:] if t not in generic]
+    queries = [qname]
+    if qvint:
+        queries.append(f"{brand} {qvint}")
+    q2 = (brand + " " + " ".join(rare)).strip()
+    if q2:
+        queries.append(q2)
+    if qvint and rare:
+        queries.append(f"{brand} {qvint} " + " ".join(rare))
+    cands, ids, best_score = [], set(), -999
+    for q in dict.fromkeys(queries):
+        more = await search_candidates(page, quote_plus(q))
+        await page.wait_for_timeout(DELAY)
+        new = [c for c in more if c["id"] not in ids]
+        ids.update(c["id"] for c in new)
+        cands += new
+        if cands:
+            best_score = max(
+                score(qname, qabv, qage, qvint, qdec, c) for c in cands)
+        if best_score >= 70:
+            break
+    scored = sorted(
+        ((score(qname, qabv, qage, qvint, qdec, c), c) for c in cands),
+        key=lambda x: -x[0])
+    # Google fallback trigger: nothing found, weak match (raw score
+    # <45 ≈ conf <50), or top candidate's ABV doesn't match exactly
+    abv_mismatch = (scored and qabv is not None
+                    and scored[0][1]["strength"] is not None
+                    and abs(qabv - scored[0][1]["strength"]) > 0.11)
+    if not scored or scored[0][0] < 45 or abv_mismatch:
+        gc = await google_candidates(page, brand, qabv, rare)
+        seen = {c["id"] for c in cands}
+        cands += [c for c in gc if c["id"] not in seen]
+        scored = sorted(
+            ((score(qname, qabv, qage, qvint, qdec, c), c) for c in cands),
+            key=lambda x: -x[0])
+    if not scored:
+        return {"input": raw, "found": False}
+    top_score, top = scored[0]
+    det = top.get("det") or await bottle_details(page, top["id"])
+    if not top.get("det"):
+        await page.wait_for_timeout(DELAY)
+    # confidence = raw score of the winner; ambiguity = close runner-up
+    conf = max(5, min(99, top_score))
+    if not verify(qname, det):
+        conf = min(conf, 20)
+    margin = top_score - (scored[1][0] if len(scored) > 1 else -999)
+    ambiguous = 0 <= margin < 15
+    alts = [{"wb_id": c["id"], "name": c["name"],
+             "strength": c["strength"], "bottled": c["bottled"],
+             "url": BOTTLE.format(id=c["id"])}
+            for _, c in scored[1:4] if conf < 70]
+    return {
+        "input": raw, "found": conf >= 15, "wb_id": top["id"],
+        "name": det["name"] or top["name"],
+        "distillery": det["distillery"], "bottler": det["bottler"],
+        "rating": det["rating"], "votes": det["votes"],
+        "abv": det["abv"], "lowest_price_eur": det["lowest_price_eur"],
+        "shops": det["shops"], "confidence": round(conf),
+        "ambiguous": ambiguous,
+        "url": BOTTLE.format(id=top["id"]),
+        "alternatives": alts,
+    }
 
 
 async def main(lines):
@@ -230,73 +308,25 @@ async def main(lines):
                    "yo", "biblical", "peated", "fortified", "wine", "m", "h",
                    "mh", "m&h", "sc", "edition", "release", "finish",
                    "stare", "butelkowanie", "wydanie", "vintage"}
-        for raw in lines:
-            qname, qabv, qage, qvint, qdec = parse_line(raw)
-            toks = re.findall(r"[a-z0-9&]+", qname.lower())
-            brand = toks[0] if toks else ""
-            rare = [t for t in toks[1:] if t not in generic]
-            queries = [qname]
-            if qvint:
-                queries.append(f"{brand} {qvint}")
-            q2 = (brand + " " + " ".join(rare)).strip()
-            if q2:
-                queries.append(q2)
-            if qvint and rare:
-                queries.append(f"{brand} {qvint} " + " ".join(rare))
-            cands, ids, best_score = [], set(), -999
-            for q in dict.fromkeys(queries):
-                more = await search_candidates(page, quote_plus(q))
-                await page.wait_for_timeout(DELAY)
-                new = [c for c in more if c["id"] not in ids]
-                ids.update(c["id"] for c in new)
-                cands += new
-                if cands:
-                    best_score = max(
-                        score(qname, qabv, qage, qvint, qdec, c) for c in cands)
-                if best_score >= 70:
-                    break
-            scored = sorted(
-                ((score(qname, qabv, qage, qvint, qdec, c), c) for c in cands),
-                key=lambda x: -x[0])
-            # Google fallback trigger: nothing found, weak match (raw score
-            # <45 ≈ final conf <50), or top candidate's ABV doesn't match
-            # exactly (wrong ABV ≈ wrong bottle, per user rule)
-            abv_mismatch = (scored and qabv is not None
-                            and scored[0][1]["strength"] is not None
-                            and abs(qabv - scored[0][1]["strength"]) > 0.11)
-            if not scored or scored[0][0] < 45 or abv_mismatch:
-                gc = await google_candidates(page, brand, qabv, rare)
-                seen = {c["id"] for c in cands}
-                cands += [c for c in gc if c["id"] not in seen]
-                scored = sorted(
-                    ((score(qname, qabv, qage, qvint, qdec, c), c) for c in cands),
-                    key=lambda x: -x[0])
-            if not scored:
-                results.append({"input": raw, "found": False})
+        # incremental checkpoint: every row is appended as it completes,
+        # so a crash mid-run keeps the rows already done
+        done = 0
+        if os.path.exists("results.jsonl"):
+            prev = [json.loads(l) for l in open("results.jsonl") if l.strip()]
+            done = len(prev)
+            results.extend(prev)
+        out = open("results.jsonl", "a")
+        for i, raw in enumerate(lines):
+            if i < done:
                 continue
-            top_score, top = scored[0]
-            det = top.get("det") or await bottle_details(page, top["id"])
-            if not top.get("det"):
-                await page.wait_for_timeout(DELAY)
-            margin = top_score - (scored[1][0] if len(scored) > 1 else 0)
-            conf = max(5, min(99, top_score + min(margin, 20) / 4))
-            if not verify(qname, det):
-                conf = min(conf, 20)
-            not_found = conf < 15
-            alts = [{"wb_id": c["id"], "name": c["name"],
-                     "strength": c["strength"], "bottled": c["bottled"],
-                     "url": BOTTLE.format(id=c["id"])}
-                    for _, c in scored[1:4] if conf < 70]
-            results.append({
-                "input": raw, "found": not not_found, "wb_id": top["id"],
-                "name": det["name"] or top["name"],
-                "distillery": det["distillery"], "bottler": det["bottler"],
-                "rating": det["rating"], "votes": det["votes"],
-                "abv": det["abv"], "lowest_price_eur": det["lowest_price_eur"],
-                "shops": det["shops"], "confidence": round(conf),
-                "url": BOTTLE.format(id=top["id"]),
-                "alternatives": alts,
-            })
+            try:
+                r = await lookup_one(page, raw, generic)
+            except Exception as e:
+                r = {"input": raw, "found": False, "error": str(e)[:200]}
+            results.append(r)
+            out.write(json.dumps(r) + "\n")
+            out.flush()
+        out.close()
         await page.close()
         return results
 
@@ -305,8 +335,9 @@ if __name__ == "__main__":
     lines = [l.strip() for l in sys.stdin if l.strip()]
     res = asyncio.run(main(lines))
     res.sort(key=lambda r: (not r["found"], -(r.get("rating") or 0)))
-    fields = ["input", "confidence", "name", "rating", "lowest_price_eur",
-              "url", "votes", "abv", "shops", "wb_id", "alternatives"]
+    fields = ["input", "confidence", "ambiguous", "name", "rating",
+              "lowest_price_eur", "url", "votes", "abv", "shops",
+              "wb_id", "alternatives"]
     with open("results.csv", "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
