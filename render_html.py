@@ -102,11 +102,14 @@ function tglAlt(el) {{
   const cur = tr._row;
   const td = document.createElement("tr"); td.className="altrow";
   td.innerHTML = `<td colspan="${{COLS.length}}"><table class="alts">
-    <tr><th>pick</th><th>name</th><th>abv</th><th>bottled</th><th>link</th></tr>` +
+    <tr><th>pick</th><th>score</th><th>name</th><th>abv</th><th>bottled</th><th>rating</th><th>price €</th><th>link</th></tr>` +
     a.map(x => `<tr>
       <td><button class="pick" onclick="swap('${{enc(cur.input)}}','${{enc(JSON.stringify(x))}}')">use this</button></td>
+      <td>${{x.score??""}}</td>
       <td>${{x.name.split("\\n")[0]}}</td><td>${{x.strength??"?"}}%</td>
-      <td>${{x.bottled??""}}</td><td><a href="${{x.url}}">link</a></td></tr>`).join("") +
+      <td>${{x.bottled??""}}</td><td>${{x.rating??""}}</td>
+      <td>${{x.lowest_price_eur? "€"+x.lowest_price_eur : ""}}</td>
+      <td><a href="${{x.url}}">link</a></td></tr>`).join("") +
     `</table></td>`;
   tr.after(td); el.textContent = el.textContent.replace("+","−");
 }}

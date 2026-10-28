@@ -281,12 +281,24 @@ async def lookup_one(page, raw, generic):
         breakdown["verify"] = "distillery tokens missing on page -> capped"
     margin = top_score - (scored[1][0] if len(scored) > 1 else -999)
     ambiguous = 0 <= margin < 15
-    # every scored candidate becomes an alternative the HTML can swap in
-    alts = [{"wb_id": c["id"], "name": c["name"],
+    # every scored candidate becomes an alternative the HTML can swap in;
+    # plausible ones get their page fetched too (rating/price columns)
+    alts = []
+    for s, c in scored[1:11]:
+        a = {"wb_id": c["id"], "name": c["name"],
              "strength": c["strength"], "age": c.get("age"),
              "bottled": c.get("bottled"), "score": round(s),
              "url": BOTTLE.format(id=c["id"])}
-            for s, c in scored[1:11]]
+        if s >= max(0, top_score - 35):
+            try:
+                ad = c.get("det") or await bottle_details(page, c["id"])
+                a.update({"rating": ad["rating"], "votes": ad["votes"],
+                          "lowest_price_eur": ad["lowest_price_eur"]})
+                if not c.get("det"):
+                    await page.wait_for_timeout(DELAY)
+            except Exception:
+                pass
+        alts.append(a)
     return {
         "input": raw, "found": conf >= 15, "wb_id": top["id"],
         "name": det["name"] or top["name"],
