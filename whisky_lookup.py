@@ -345,6 +345,7 @@ if __name__ == "__main__":
         for r in res:
             row = dict(r)
             row["alternatives"] = json.dumps(row.get("alternatives", []))
+            row["score_parts"] = json.dumps(row.get("score_parts", {}))
             w.writerow({k: row.get(k) for k in fields})
 
     cols = [("input", "Input", 36), ("confidence", "Conf%", 5),
