@@ -154,7 +154,7 @@ async def search_candidates(page, query):
         if r["id"] not in seen:
             seen.add(r["id"])
             cands.append(r)
-    return cands[:10]
+    return cands[:30]
 
 
 async def google_candidates(page, brand, qabv, rare):
@@ -281,10 +281,12 @@ async def lookup_one(page, raw, generic):
         breakdown["verify"] = "distillery tokens missing on page -> capped"
     margin = top_score - (scored[1][0] if len(scored) > 1 else -999)
     ambiguous = 0 <= margin < 15
+    # every scored candidate becomes an alternative the HTML can swap in
     alts = [{"wb_id": c["id"], "name": c["name"],
-             "strength": c["strength"], "bottled": c["bottled"],
+             "strength": c["strength"], "age": c.get("age"),
+             "bottled": c.get("bottled"), "score": round(s),
              "url": BOTTLE.format(id=c["id"])}
-            for _, c in scored[1:4] if conf < 70]
+            for s, c in scored[1:11]]
     return {
         "input": raw, "found": conf >= 15, "wb_id": top["id"],
         "name": det["name"] or top["name"],
