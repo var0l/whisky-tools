@@ -49,6 +49,56 @@ ALIASES = [
 ]
 
 
+# WB catalogues bottles under the distillery name, but event lists often
+# name the parent brand (Nikka for Yoichi/Miyagikyo, Suntory for Yamazaki...)
+BRAND_SIBLINGS = {
+    "nikka": ["yoichi", "miyagikyo"],
+    "suntory": ["yamazaki", "hakushu", "chita"],
+    "diageo": ["talisker", "lagavulin", "oban", "caol ila", "mortlach"],
+}
+
+
+def edit1(a, b):
+    """levenshtein distance <=1 (substitute/insert/delete one char)"""
+    if abs(len(a) - len(b)) > 1:
+        return False
+    if len(a) > len(b):
+        a, b = b, a
+    i = j = d = 0
+    while i < len(a) and j < len(b):
+        if a[i] == b[j]:
+            i += 1; j += 1
+        elif len(a) == len(b):
+            i += 1; j += 1; d += 1
+        else:
+            j += 1; d += 1
+        if d > 1:
+            return False
+    d += len(b) - j
+    return d <= 1
+
+
+def token_overlap(q, r):
+    """exact + typo-tolerant (1 edit, len>=6) token matches"""
+    exact = q & r
+    fuzzy = {t for t in q - r if len(t) >= 6
+             and any(edit1(t, u) for u in r)}
+    return exact | fuzzy
+
+
+def group_tokens(ts):
+    """map distillery-sibling tokens to their group key, so a 'nikka'
+    query matches a 'miyagikyo' bottle and vice versa"""
+    out = set()
+    for t in ts:
+        g = t
+        for k, sibs in BRAND_SIBLINGS.items():
+            if t == k or t in sibs:
+                g = k
+        out.add(g)
+    return out
+
+
 def strip_acc(s):
     return "".join(c for c in unicodedata.normalize("NFKD", s)
                    if not unicodedata.combining(c))
@@ -97,8 +147,9 @@ def parse_line(line):
 
 def score_parts(qname, qabv, qage, qvint, qdec, cand):
     """returns (total, breakdown dict) for transparency"""
-    q, r = alias_tokens(qname), alias_tokens(cand["name"])
-    overlap = len(q & r) / max(len(q), 1)
+    q = group_tokens(alias_tokens(qname))
+    r = group_tokens(alias_tokens(cand["name"]))
+    overlap = len(token_overlap(q, r)) / max(len(q), 1)
     parts = {"name": round(50 * overlap, 1)}
     if qabv is not None and cand["strength"] is not None:
         parts["abv"] = 40 if abs(qabv - cand["strength"]) <= 0.11 else -60
@@ -117,13 +168,13 @@ def score(qname, qabv, qage, qvint, qdec, cand):
 
 def verify(qname, det):
     """page-level sanity: input's distillery tokens must appear on the page"""
-    qt = alias_tokens(qname)
-    page_t = alias_tokens(" ".join(filter(None, [
+    qt = group_tokens(alias_tokens(qname))
+    page_t = group_tokens(alias_tokens(" ".join(filter(None, [
         det.get("name"), det.get("distillery"), det.get("bottler"),
-        det.get("series")])))
+        det.get("series")]))))
     known_stop = {"ml", "vol", "cl", "single", "malt", "cask"}
     qt -= known_stop
-    return len(qt & page_t) > 0
+    return len(token_overlap(qt, page_t)) > 0
 
 
 async def search_candidates(page, query):
@@ -240,6 +291,11 @@ async def lookup_one(page, raw, generic):
         queries.append(q2)
     if qvint and rare:
         queries.append(f"{brand} {qvint} " + " ".join(rare))
+    # parent brand -> sibling distillery queries (Nikka -> Miyagikyo etc.)
+    for sib in BRAND_SIBLINGS.get(brand, []):
+        for n in (2, 3):
+            if rare[:n]:
+                queries.append(sib + " " + " ".join(rare[:n]))
     cands, ids, best_score = [], set(), -999
     for q in dict.fromkeys(queries):
         more = await search_candidates(page, quote_plus(q))
@@ -250,7 +306,7 @@ async def lookup_one(page, raw, generic):
         if cands:
             best_score = max(
                 score(qname, qabv, qage, qvint, qdec, c) for c in cands)
-        if best_score >= 70:
+        if best_score >= 85:
             break
     scored = sorted(
         ((score(qname, qabv, qage, qvint, qdec, c), c) for c in cands),
@@ -322,7 +378,7 @@ async def main(lines):
                    "of", "de", "and", "a", "an", "year", "years", "old",
                    "yo", "biblical", "peated", "fortified", "wine", "m", "h",
                    "mh", "m&h", "sc", "edition", "release", "finish",
-                   "stare", "butelkowanie", "wydanie", "vintage"}
+                   "stare", "butelkowanie", "wydanie", "vintage", "malt"}
         # incremental checkpoint: every row is appended as it completes,
         # so a crash mid-run keeps the rows already done
         done = 0
