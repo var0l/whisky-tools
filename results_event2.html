@@ -1,0 +1,177 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Whisky results</title>
+<style>
+body{font-family:system-ui,sans-serif;font-size:14px;margin:12px}
+input#f{width:100%;box-sizing:border-box;padding:8px;margin-bottom:6px;font-size:16px}
+#colsel{margin-bottom:8px;font-size:12px}
+#colsel label{margin-right:10px;white-space:nowrap;cursor:pointer}
+#ovr{margin:6px 0;padding:8px;background:#eef;border-radius:6px;display:none;font-size:13px}
+table{border-collapse:collapse;width:100%}
+th{position:sticky;top:0;background:#fff;cursor:pointer;user-select:none;border-bottom:2px solid #999;padding:6px 8px;text-align:left;white-space:nowrap}
+th .arr{color:#999;font-size:11px}
+td{border-bottom:1px solid #e2e2e2;padding:6px 8px;text-align:left;vertical-align:top}
+.badge{display:inline-block;min-width:2em;text-align:center;padding:1px 6px;border-radius:8px;font-weight:600}
+.hi{background:#d8f0d8;color:#174517} .mid{background:#fdeec8;color:#7a5200} .lo{background:#f8d7d7;color:#a22}
+tr.nf td{color:#999}
+tr.swapped td{background:#f0f7ff}
+.altrow td,.xrow td{background:#fafafa;font-size:12px;color:#555;padding:4px 8px 8px 32px}
+a{color:#06c;text-decoration:none}
+.tgl{cursor:pointer;color:#888;font-size:12px;white-space:nowrap}
+.num{text-align:right}
+#nfhead{cursor:pointer;margin:14px 0 6px;color:#666;font-weight:600}
+.parts{color:#666}
+.parts .neg{color:#b00}
+table.alts{margin:4px 0;background:#fff;border:1px solid #ddd}
+table.alts td{border-bottom:1px solid #eee;padding:4px 8px}
+table.alts th{position:static;border-bottom:1px solid #ccc;padding:4px 8px;font-size:11px;color:#777}
+button.pick{font-size:12px;padding:1px 8px;cursor:pointer}
+.swapnote{color:#06c;font-size:12px}
+</style>
+<input id="f" placeholder="filter… (e.g. talisker, 58.4, sftc)">
+<div id="colsel"></div>
+<div id="ovr"><b>Your swaps</b> <span id="ovrcount"></span> —
+  <button onclick="copyOverrides()">copy overrides</button>
+  <button onclick="clearOverrides()">reset</button>
+  <div id="ovrlist" style="margin-top:4px;color:#555"></div></div>
+<table id="t"><thead><tr id="h"></tr></thead><tbody id="b"></tbody></table>
+<div id="nfhead" onclick="toggleNF()">▸ NOT FOUND (<span id="nfc"></span>) — tap to expand</div>
+<table id="nft" style="display:none"><thead><tr id="nfh"></tr></thead><tbody id="nfb"></tbody></table>
+<script>
+const COLS = [
+  ["input","Input",1],["confidence","Conf",1],["ambiguous","Amb",0],
+  ["name","Match",1],["rating","Rating",1],["lowest_price_eur","Price €",1],
+  ["votes","Votes",0],["abv","ABV",1],["shops","Shops",0],["url","Link",1]];
+const NUM = new Set(["confidence","rating","lowest_price_eur","votes","abv","shops"]);
+const rows = [{"input": "Macallan 20028 SMWS 24.182 16yo 62.9% Oloroso + 1st fill PX finish", "confidence": "73", "ambiguous": "False", "score_parts": "{\"name\": 18.2, \"abv\": 40, \"age\": 15}", "name": "Macallan 2008 SMWS 24.182", "rating": "91.2", "lowest_price_eur": "384.93", "url": "https://www.whiskybase.com/whiskies/whisky/273498", "votes": "17", "abv": "62.9", "shops": "2", "wb_id": "273498", "alternatives": "[]"}, {"input": "Dailuaine 1997 TWA Shi Nagomi 23yo 49.7%", "confidence": "99", "ambiguous": "False", "score_parts": "{\"name\": 41.7, \"abv\": 40, \"age\": 15, \"vintage\": 10}", "name": "Dailuaine 1997 TWA", "rating": "89.96", "lowest_price_eur": "0.0", "url": "https://www.whiskybase.com/whiskies/whisky/259777", "votes": "28", "abv": "49.7", "shops": "1", "wb_id": "259777", "alternatives": "[]"}, {"input": "Glenlossie 1992 SV 33yo 54.3%", "confidence": "99", "ambiguous": "False", "score_parts": "{\"name\": 37.5, \"abv\": 40, \"age\": 15, \"vintage\": 10}", "name": "Glenlossie 1992 SV", "rating": "89.0", "lowest_price_eur": "299.9", "url": "https://www.whiskybase.com/whiskies/whisky/308341", "votes": "28", "abv": "54.3", "shops": "22", "wb_id": "308341", "alternatives": "[]"}, {"input": "Amrut Fusion XI 50.0%", "confidence": "90", "ambiguous": "False", "score_parts": "{\"name\": 50.0, \"abv\": 40}", "name": "Amrut Fusion XI", "rating": "88.36", "lowest_price_eur": "286.7", "url": "https://www.whiskybase.com/whiskies/whisky/229095", "votes": "49", "abv": "50.0", "shops": "28", "wb_id": "229095", "alternatives": "[]"}, {"input": "Ardmore 2004 TTOW \"Paloma\" 18yo 55.8%", "confidence": "95", "ambiguous": "True", "score_parts": "{\"name\": 30.0, \"abv\": 40, \"age\": 15, \"vintage\": 10}", "name": "Ardmore 2004 TTOW", "rating": "87.89", "lowest_price_eur": "245.0", "url": "https://www.whiskybase.com/whiskies/whisky/225366", "votes": "75", "abv": "55.8", "shops": "1", "wb_id": "225366", "alternatives": "[{\"wb_id\": \"307845\", \"name\": \"Ardmore 2004 GM\\nConnoisseurs Choice - Cask Strength\\n\\u783a \\u2022 \\u884c \\u2022 \\u5178 \\u2022 \\u85cf\", \"strength\": 55.7, \"age\": 18, \"bottled\": 2023, \"score\": 85, \"url\": \"https://www.whiskybase.com/whiskies/whisky/307845\", \"rating\": 0.0, \"votes\": 0, \"lowest_price_eur\": null}, {\"wb_id\": \"242145\", \"name\": \"Ardmore 2004 TTOW\\nFriends of the Taste of Whisky\", \"strength\": 51.2, \"age\": 19, \"bottled\": 2023, \"score\": -20, \"url\": \"https://www.whiskybase.com/whiskies/whisky/242145\"}, {\"wb_id\": \"261802\", \"name\": \"Ardmore 2004 GM\\nConnoisseurs Choice\", \"strength\": 53.6, \"age\": 20, \"bottled\": 2024, \"score\": -30, \"url\": \"https://www.whiskybase.com/whiskies/whisky/261802\"}, {\"wb_id\": \"120812\", \"name\": \"Ardmore 2004 SMWS 66.124\\nGrippy and captivating\", \"strength\": 60.1, \"age\": 13, \"bottled\": 2018, \"score\": -45, \"url\": \"https://www.whiskybase.com/whiskies/whisky/120812\"}, {\"wb_id\": \"84704\", \"name\": \"Ardmore 2004 SMWS 66.84\\nRich and slightly naughty\", \"strength\": 61, \"age\": 11, \"bottled\": 2016, \"score\": -45, \"url\": \"https://www.whiskybase.com/whiskies/whisky/84704\"}, {\"wb_id\": \"128352\", \"name\": \"Ardmore 2004 SMWS 66.90\\nSteam train through a pharmacy\", \"strength\": 58.5, \"age\": 12, \"bottled\": 2016, \"score\": -45, \"url\": \"https://www.whiskybase.com/whiskies/whisky/128352\"}, {\"wb_id\": \"84706\", \"name\": \"Ardmore 2004 SMWS 66.81\\nBlack bun by a peaty hearth\", \"strength\": 61.4, \"age\": 11, \"bottled\": 2016, \"score\": -45, \"url\": \"https://www.whiskybase.com/whiskies/whisky/84706\"}, {\"wb_id\": \"78034\", \"name\": \"Ardmore 2004 SMWS 66.80\\nSweet Peat Carolina\", \"strength\": 58.2, \"age\": 11, \"bottled\": 2015, \"score\": -45, \"url\": \"https://www.whiskybase.com/whiskies/whisky/78034\"}, {\"wb_id\": \"76577\", \"name\": \"Ardmore 2004 SMWS 66.66\\nGinger makes Fred smile\", \"strength\": 61.9, \"age\": 10, \"bottled\": 2015, \"score\": -45, \"url\": \"https://www.whiskybase.com/whiskies/whisky/76577\"}, {\"wb_id\": \"75882\", \"name\": \"Ardmore 2004 SMWS 66.75\\nDavid faces up to Goliath\", \"strength\": 58.9, \"age\": 11, \"bottled\": 2015, \"score\": -45, \"url\": \"https://www.whiskybase.com/whiskies/whisky/75882\"}]"}, {"input": "Nikka single malt Sherry&Sweet distilerry limited 55%", "confidence": "69", "ambiguous": "True", "score_parts": "{\"name\": 28.6, \"abv\": 40}", "name": "Yoichi 12-year-old", "rating": "87.13", "lowest_price_eur": "", "url": "https://www.whiskybase.com/whiskies/whisky/51234", "votes": "26", "abv": "55.0", "shops": "", "wb_id": "51234", "alternatives": "[{\"wb_id\": \"57002\", \"name\": \"Miyagikyo 12-year-old\\nNikka Key Malt - Sherry & Sweet\", \"strength\": 55, \"age\": 12, \"bottled\": null, \"score\": 69, \"url\": \"https://www.whiskybase.com/whiskies/whisky/57002\", \"rating\": 88.26, \"votes\": 36, \"lowest_price_eur\": 400.0}, {\"wb_id\": \"80969\", \"name\": \"Miyagikyo 12-year-old\\nNikka Key Malt - Sherry & Sweet\", \"strength\": 55, \"age\": 12, \"bottled\": null, \"score\": 69, \"url\": \"https://www.whiskybase.com/whiskies/whisky/80969\", \"rating\": 84.0, \"votes\": 12, \"lowest_price_eur\": null}, {\"wb_id\": \"292026\", \"name\": \"Yoichi 2014\\nNikka Single Cask Malt Whisky\\n\\u4f59\\u5e02\", \"strength\": 55, \"age\": 10, \"bottled\": 2024, \"score\": 61, \"url\": \"https://www.whiskybase.com/whiskies/whisky/292026\", \"rating\": 0.0, \"votes\": 0, \"lowest_price_eur\": null}, {\"wb_id\": \"291927\", \"name\": \"Yoichi 2014\\nNikka Single Cask Malt Whisky\\n\\u4f59\\u5e02\", \"strength\": 55, \"age\": 10, \"bottled\": 2024, \"score\": 61, \"url\": \"https://www.whiskybase.com/whiskies/whisky/291927\", \"rating\": 0.0, \"votes\": 0, \"lowest_price_eur\": null}, {\"wb_id\": \"278787\", \"name\": \"Yoichi 2014\\nNikka Single Cask Malt Whisky\", \"strength\": 55, \"age\": 10, \"bottled\": 2024, \"score\": 61, \"url\": \"https://www.whiskybase.com/whiskies/whisky/278787\", \"rating\": 87.5, \"votes\": 6, \"lowest_price_eur\": null}, {\"wb_id\": \"51235\", \"name\": \"Yoichi 12-year-old\\nNikka Key Malt - Peaty & Salty\", \"strength\": 55, \"age\": 12, \"bottled\": null, \"score\": 54, \"url\": \"https://www.whiskybase.com/whiskies/whisky/51235\", \"rating\": 88.9, \"votes\": 34, \"lowest_price_eur\": 698.06}, {\"wb_id\": \"58279\", \"name\": \"Miyagikyo 12-year-old\\nNikka Key Malt - Malty & Soft\", \"strength\": 55, \"age\": 12, \"bottled\": null, \"score\": 54, \"url\": \"https://www.whiskybase.com/whiskies/whisky/58279\", \"rating\": 86.5, \"votes\": 8, \"lowest_price_eur\": 328.0}, {\"wb_id\": \"57004\", \"name\": \"Miyagikyo 12-year-old\\nNikka Key Malt - Fruit & Rich\", \"strength\": 55, \"age\": 12, \"bottled\": null, \"score\": 54, \"url\": \"https://www.whiskybase.com/whiskies/whisky/57004\", \"rating\": 84.63, \"votes\": 15, \"lowest_price_eur\": null}, {\"wb_id\": \"57003\", \"name\": \"Miyagikyo 12-year-old\\nNikka Key Malt - Soft & Dry\", \"strength\": 55, \"age\": 12, \"bottled\": null, \"score\": 54, \"url\": \"https://www.whiskybase.com/whiskies/whisky/57003\", \"rating\": 85.5, \"votes\": 2, \"lowest_price_eur\": null}, {\"wb_id\": \"51236\", \"name\": \"Yoichi 12-year-old\\nNikka Key Malt - Woody & Vanillic\", \"strength\": 55, \"age\": 12, \"bottled\": null, \"score\": 54, \"url\": \"https://www.whiskybase.com/whiskies/whisky/51236\", \"rating\": 86.55, \"votes\": 24, \"lowest_price_eur\": 340.0}]"}, {"input": "Ardbeg Hypernova 51.0%", "confidence": "90", "ambiguous": "False", "score_parts": "{\"name\": 50.0, \"abv\": 40}", "name": "Ardbeg Hypernova", "rating": "87.0", "lowest_price_eur": "135.0", "url": "https://www.whiskybase.com/whiskies/whisky/202020", "votes": "688", "abv": "51.0", "shops": "29", "wb_id": "202020", "alternatives": "[]"}, {"input": "Dailuaine 21yo Douglas Laing's Particular 51.5%", "confidence": "85", "ambiguous": "False", "score_parts": "{\"name\": 30.0, \"abv\": 40, \"age\": 15}", "name": "Dailuaine 1998 DL", "rating": "86.82", "lowest_price_eur": "137.1", "url": "https://www.whiskybase.com/whiskies/whisky/159626", "votes": "14", "abv": "51.5", "shops": "3", "wb_id": "159626", "alternatives": "[]"}, {"input": "Corporal Wojtek Speyside Single Malt 12yo 50,5%", "confidence": "72", "ambiguous": "False", "score_parts": "{\"name\": 16.7, \"abv\": 40, \"age\": 15}", "name": "Corporal Wojtek 12-year-old PrLi", "rating": "85.92", "lowest_price_eur": "97.11", "url": "https://www.whiskybase.com/whiskies/whisky/294346", "votes": "14", "abv": "50.5", "shops": "3", "wb_id": "294346", "alternatives": "[]"}, {"input": "Scallywag 12yo Sherry Cask 53.6%", "confidence": "92", "ambiguous": "False", "score_parts": "{\"name\": 37.5, \"abv\": 40, \"age\": 15}", "name": "Scallywag 12-year-old DL", "rating": "83.32", "lowest_price_eur": "50.0", "url": "https://www.whiskybase.com/whiskies/whisky/129497", "votes": "28", "abv": "53.6", "shops": "6", "wb_id": "129497", "alternatives": "[]"}, {"input": "Paul John SMSW 134.14 single cask 5yo 58.4%", "confidence": "80", "ambiguous": "True", "score_parts": "{\"name\": 25.0, \"abv\": 40, \"age\": 15}", "name": "Paul John 2016 SMWS 134.14", "rating": "81.5", "lowest_price_eur": "167.08", "url": "https://www.whiskybase.com/whiskies/whisky/215328", "votes": "2", "abv": "58.4", "shops": "1", "wb_id": "215328", "alternatives": "[{\"wb_id\": \"149393\", \"name\": \"Paul John 2014 SMWS 134.6\\nHappiness is a warm Goa\", \"strength\": 58.5, \"age\": 5, \"bottled\": null, \"score\": 74, \"url\": \"https://www.whiskybase.com/whiskies/whisky/149393\", \"rating\": 88.26, \"votes\": 21, \"lowest_price_eur\": null}, {\"wb_id\": \"217189\", \"name\": \"Paul John 2015 JWC\\nSingle Cask Nation\", \"strength\": 56.7, \"age\": 5, \"bottled\": 2022, \"score\": -20, \"url\": \"https://www.whiskybase.com/whiskies/whisky/217189\"}, {\"wb_id\": \"97731\", \"name\": \"Paul John 05-year-old CA\\nWorld Whiskies - Individual Cask\", \"strength\": 57.4, \"age\": 5, \"bottled\": 2017, \"score\": -26, \"url\": \"https://www.whiskybase.com/whiskies/whisky/97731\"}, {\"wb_id\": \"265421\", \"name\": \"Paul John 2019 SMWS 134.20\\nCocoa, nuts and coconuts\", \"strength\": 57.6, \"age\": 5, \"bottled\": 2024, \"score\": -26, \"url\": \"https://www.whiskybase.com/whiskies/whisky/265421\"}, {\"wb_id\": \"234767\", \"name\": \"Paul John 2016 SMWS 134.16\\nA smooth sipping treat\", \"strength\": 59, \"age\": 5, \"bottled\": null, \"score\": -26, \"url\": \"https://www.whiskybase.com/whiskies/whisky/234767\"}, {\"wb_id\": \"211497\", \"name\": \"Paul John 2016 SMWS 134.12\\nPeachy assam latte\", \"strength\": 59.2, \"age\": 5, \"bottled\": null, \"score\": -26, \"url\": \"https://www.whiskybase.com/whiskies/whisky/211497\"}, {\"wb_id\": \"176090\", \"name\": \"Paul John 2015 SMWS 134.10\\nSooty sausages\", \"strength\": 58.7, \"age\": 5, \"bottled\": null, \"score\": -26, \"url\": \"https://www.whiskybase.com/whiskies/whisky/176090\"}, {\"wb_id\": \"164488\", \"name\": \"Paul John 2014 SMWS 134.9\\nEvokes warm healing sunshine\", \"strength\": 59.5, \"age\": 5, \"bottled\": null, \"score\": -26, \"url\": \"https://www.whiskybase.com/whiskies/whisky/164488\"}, {\"wb_id\": \"152029\", \"name\": \"Paul John 2014 SMWS 134.7\\nA dreamer's dram\", \"strength\": 61, \"age\": 5, \"bottled\": null, \"score\": -26, \"url\": \"https://www.whiskybase.com/whiskies/whisky/152029\"}, {\"wb_id\": \"221339\", \"name\": \"Paul John 2016 SMWS 134.15\\nSpiced and iced ginger cake\", \"strength\": 57.6, \"age\": 5, \"bottled\": null, \"score\": -26, \"url\": \"https://www.whiskybase.com/whiskies/whisky/221339\"}]"}];
+let visible = {}; COLS.forEach(([k,,d]) => visible[k]=!!d);
+let sortKey = "rating", sortDir = -1, q = "";
+// user overrides: input-line -> alternative object (wb_id,name,strength,url)
+let ov = JSON.parse(localStorage.getItem("whisky_overrides")||"{}");
+
+const cs = document.getElementById("colsel");
+for (const [k,t] of COLS) {
+  const lb = document.createElement("label");
+  lb.innerHTML = `<input type="checkbox" ${visible[k]?"checked":""} onchange="visible['${k}']=this.checked;render()"> ${t}`;
+  cs.appendChild(lb);
+}
+
+function badge(c) {
+  c = +c; const cls = c>=70?"hi":c>=40?"mid":"lo";
+  return `<span class="badge ${cls}">${c}</span>`;
+}
+function getAlts(r) { try { return JSON.parse(r.alternatives||"[]"); } catch(e){ return []; } }
+function isSwapped(r) { return !!ov[r.input]; }
+function dispName(r) { return isSwapped(r) ? ov[r.input].name : (+r.confidence<15 ? "NOT FOUND" : r.name); }
+function altsToggle(r) {
+  const a = getAlts(r);
+  if (!a.length) return "";
+  return ` <span class="tgl" onclick="tglAlt(this)">+${a.length} alt</span>`;
+}
+function explain(r) {
+  let p = {}; try { p = JSON.parse(r.score_parts||"{}"); } catch(e){}
+  const items = Object.entries(p).map(([k,v]) =>
+    typeof v==="number" ? `<span class="${v<0?"neg":""}">${k} ${v>0?"+":""}${v}</span>` : `${k}: ${v}`);
+  return `<span class="tgl" onclick="tglX(this)">explain</span><span class="parts" style="display:none"> · ${items.join(" · ")}</span>`;
+}
+function cell(r, k) {
+  if (k==="confidence") return badge(r.confidence) + " " + explain(r);
+  if (k==="ambiguous") return r.ambiguous==="True" ? "⚠" : "";
+  if (k==="url") return `<a href="${isSwapped(r)?ov[r.input].url:r.url}">link</a>`;
+  if (k==="name") return dispName(r) + altsToggle(r) +
+    (isSwapped(r) ? ` <span class="swapnote">(swapped <a href="#" onclick="unswap(event)">undo</a>)</span>` : "");
+  if (k==="lowest_price_eur") return r[k] ? "€"+(+r[k]).toFixed(0) : "";
+  return r[k] ?? "";
+}
+function tglX(el) {
+  const p = el.nextElementSibling;
+  p.style.display = p.style.display==="none" ? "inline" : "none";
+}
+function tglAlt(el) {
+  const tr = el.closest("tr");
+  const open = tr.nextElementSibling && tr.nextElementSibling.classList.contains("altrow");
+  if (open) { tr.nextElementSibling.remove(); el.textContent = el.textContent.replace("−","+"); return; }
+  const a = getAlts(tr._row);
+  const cur = tr._row;
+  const td = document.createElement("tr"); td.className="altrow";
+  td.innerHTML = `<td colspan="${COLS.length}"><table class="alts">
+    <tr><th>pick</th><th>score</th><th>name</th><th>abv</th><th>bottled</th><th>rating</th><th>price €</th><th>link</th></tr>` +
+    a.map(x => `<tr>
+      <td><button class="pick" onclick="swap('${enc(cur.input)}','${enc(JSON.stringify(x))}')">use this</button></td>
+      <td>${x.score??""}</td>
+      <td>${x.name.split("\n")[0]}</td><td>${x.strength??"?"}%</td>
+      <td>${x.bottled??""}</td><td>${x.rating??""}</td>
+      <td>${x.lowest_price_eur? "€"+x.lowest_price_eur : ""}</td>
+      <td><a href="${x.url}">link</a></td></tr>`).join("") +
+    `</table></td>`;
+  tr.after(td); el.textContent = el.textContent.replace("+","−");
+}
+function enc(s) { return btoa(unescape(encodeURIComponent(s))); }
+function dec(s) { return decodeURIComponent(escape(atob(s))); }
+function swap(inpB64, altB64) {
+  const inp = dec(inpB64), alt = JSON.parse(dec(altB64));
+  ov[inp] = alt;
+  localStorage.setItem("whisky_overrides", JSON.stringify(ov));
+  render();
+}
+function unswap(e) {
+  e.preventDefault();
+  const tr = e.target.closest("tr");
+  delete ov[tr._row.input];
+  localStorage.setItem("whisky_overrides", JSON.stringify(ov));
+  render();
+}
+function copyOverrides() {
+  const lines = Object.entries(ov).map(([k,v]) => `${k} -> wb:${v.wb_id}`);
+  navigator.clipboard.writeText(lines.join("\n"));
+}
+function clearOverrides() { ov={}; localStorage.removeItem("whisky_overrides"); render(); }
+function renderOvr() {
+  const n = Object.keys(ov).length, el = document.getElementById("ovr");
+  el.style.display = n ? "block" : "none";
+  document.getElementById("ovrcount").textContent = n;
+  document.getElementById("ovrlist").innerHTML = Object.entries(ov).map(([k,v]) =>
+    `<div>${k.slice(0,60)} → <a href="${v.url}">${v.name.split("\n")[0]}</a></div>`).join("");
+}
+const visCols = () => COLS.filter(([k]) => visible[k]);
+function header(el) {
+  el.innerHTML = visCols().map(([k,t]) =>
+    `<th data-k="${k}" onclick="sort('${k}')">${t}<span class="arr">${sortKey===k?(sortDir>0?" ▲":" ▼"):""}</span></th>`).join("");
+}
+function rowHtml(r) {
+  return visCols().map(([k]) => `<td class="${NUM.has(k)?"num":""}">${cell(r,k)}</td>`).join("");
+}
+function render() {
+  header(document.getElementById("h"));
+  header(document.getElementById("nfh"));
+  let rs = rows.filter(r => !q || JSON.stringify(r).toLowerCase().includes(q));
+  rs.sort((a,b) => {
+    if (NUM.has(sortKey)) return ((+a[sortKey]||0)-(+b[sortKey]||0))*sortDir;
+    return String(a[sortKey]).localeCompare(String(b[sortKey]))*sortDir;
+  });
+  const b = document.getElementById("b"), nfb = document.getElementById("nfb");
+  b.innerHTML = ""; nfb.innerHTML = "";
+  let nfc = 0;
+  for (const r of rs) {
+    const tr = document.createElement("tr");
+    tr._row = r;
+    if (isSwapped(r)) tr.classList.add("swapped");
+    if (+r.confidence < 15 && !isSwapped(r)) { tr.className = "nf"; nfb.appendChild(tr); nfc++; }
+    else b.appendChild(tr);
+    tr.innerHTML = rowHtml(r);
+  }
+  document.getElementById("nfc").textContent = nfc;
+  document.getElementById("nfhead").style.display = nfc ? "block" : "none";
+  renderOvr();
+}
+function toggleNF() {
+  const t = document.getElementById("nft"), h = document.getElementById("nfhead");
+  const open = t.style.display !== "none";
+  t.style.display = open ? "none" : "table";
+  h.firstChild.textContent = (open ? "▸ " : "▾ ") + "NOT FOUND (" + document.getElementById("nfc").textContent + ") — tap to expand";
+}
+function sort(k) { if (sortKey===k) sortDir*=-1; else {sortKey=k;sortDir=NUM.has(k)?-1:1;} render(); }
+document.getElementById("f").oninput = e => { q = e.target.value.toLowerCase(); render(); };
+render();
+</script>
